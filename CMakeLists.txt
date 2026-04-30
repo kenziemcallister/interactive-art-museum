@@ -1,22 +1,31 @@
 cmake_minimum_required(VERSION 3.19)
 project(ArtMuseum LANGUAGES CXX)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets)
 
 qt_standard_project_setup()
 
 qt_add_executable(ArtMuseum
     WIN32 MACOSX_BUNDLE
+
     main.cpp
+
     MainWindow.cpp
     MainWindow.h
     MainWindow.ui
+
+    MuseumWidget.cpp
+    MuseumWidget.h
+    MuseumWidget.h MuseumWidget.cpp
 )
 
 target_link_libraries(ArtMuseum
     PRIVATE
         Qt::Core
+        Qt::Gui
         Qt::Widgets
+        Qt::OpenGL
+        Qt::OpenGLWidgets
 )
 
 include(GNUInstallDirs)
