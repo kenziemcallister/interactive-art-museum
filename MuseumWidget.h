@@ -8,6 +8,9 @@
 #include <QOpenGLVertexArrayObject>
 #include <QMatrix4x4>
 #include <QVector3D>
+#include <QKeyEvent> //used for using keyboard keys when moving the camera
+#include <QMouseEvent> //used for using the mouse to look around
+#include <QCursor>
 
 // This widget is where our 3D museum scene is drawn
 // It inherits from QOpenGLWidget so Qt can place it inside the MainWindow
@@ -29,6 +32,14 @@ protected:
     // Called whenever the scene needs to be redrawn
     void paintGL() override;
 
+    //this function helps us respond when the user presses W,A,S, or D
+    void keyPressEvent(QKeyEvent * event) override;
+
+    //this helps us use the mouse to look around the rooms
+    void mouseMoveEvent(QMouseEvent * event) override;
+
+    void mousePressEvent(QMouseEvent * event) override;
+
 private:
     // Creates the vertices for our simple room
     void setupRoomGeometry();
@@ -43,6 +54,25 @@ private:
 
     // This projection matrix controls the perspective
     QMatrix4x4 m_projection;
+
+    //camera variables below:
+    QVector3D m_cameraPosition;
+    QVector3D m_cameraFront;
+    QVector3D m_cameraUp;
+
+    float m_cameraSpeed = 0.25f;
+
+    //mouse look variables:
+    float m_yaw = -90.0f; //-90 lines up with camera looking straight ahead (down at the -z axis)
+    float m_pitch = 0.0f;
+
+    float m_mouseSensitivity = 0.15f;
+
+    bool m_firstMouse = true;
+    QPoint m_lastMousePosition;
+
+    bool m_mouseLocked = true;
+    bool m_ignoreNextMouseMove = false;
 };
 
 #endif // MUSEUMWIDGET_H

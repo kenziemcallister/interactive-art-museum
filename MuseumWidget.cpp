@@ -1,6 +1,8 @@
 #include "MuseumWidget.h"
 
 #include <vector>
+#include <QtGlobal>
+#include <QtMath>
 
 // Each vertex has 3D position and a color
 // This is where we will add texture coordinates later for more complex details
@@ -14,6 +16,26 @@ MuseumWidget::MuseumWidget(QWidget *parent)
     : QOpenGLWidget(parent),
     m_vbo(QOpenGLBuffer::VertexBuffer)
 {
+    //lets the OpenGL widget to receive keyboard input
+    setFocusPolicy(Qt::StrongFocus);
+
+    //allows to receive mouse movement events even when no mouse button is pressed
+    setMouseTracking(true);
+
+    //hide the cursor while navigating for cleaner look
+    setCursor(Qt::BlankCursor);
+
+    //starting camera position
+    //x = left and right
+    //y = height
+    //z = moving forward or backward
+    m_cameraPosition = QVector3D(0.0f, 1.6f, 0.0f);
+
+    //direction the camera looks at (-z means looking into the room)
+    m_cameraFront = QVector3D(0.0f, 0.0f, -1.0f);
+
+    //defining which direction is considered up:
+    m_cameraUp = QVector3D(0.0f, 1.0f, 0.0f);
 }
 
 MuseumWidget::~MuseumWidget()
@@ -106,15 +128,12 @@ void MuseumWidget::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Camera/view matrix
-    // For now the camera is fixed
-    // WASD will change cameraPosition in later steps
     QMatrix4x4 view;
 
-    QVector3D cameraPosition(0.0f, 1.6f, 4.0f);   // eye position
-    QVector3D cameraTarget(0.0f, 1.4f, -3.0f);    // what we are looking at
-    QVector3D cameraUp(0.0f, 1.0f, 0.0f);         // which way is up
-
-    view.lookAt(cameraPosition, cameraTarget, cameraUp);
+    //the camera looks from the current position toward pos in front of it
+    //m_cameraPosition = where we are standing,
+    //m_cameraPosition + m_cameraFront is the point we are looking at
+    view.lookAt(m_cameraPosition, m_cameraPosition + m_cameraFront, m_cameraUp);
 
     // Model matrix
     // The room is not moved, rotated, or scaled yet
@@ -201,6 +220,15 @@ void MuseumWidget::setupRoomGeometry()
         wallColor
         );
 
+    //Front wall - wall behind player when scene starts
+    addRectangle(
+        QVector3D(right, floorY,   frontZ),
+        QVector3D(left,  floorY,   frontZ),
+        QVector3D(left,  ceilingY, frontZ),
+        QVector3D(right, ceilingY, frontZ),
+        wallColor
+        );
+
     // Left wall
     addRectangle(
         QVector3D(left, floorY,   frontZ),
@@ -254,4 +282,133 @@ void MuseumWidget::setupRoomGeometry()
 
     m_vbo.release();
     m_vao.release();
+}
+
+void MuseumWidget::keyPressEvent(QKeyEvent *event)
+{
+    //forward/backward movement uses the direction the camera is facing
+    QVector3D forward = m_cameraFront;
+    forward.setY(0.0f);
+    forward.normalize();
+
+    //left/right movement uses the cross product
+    //this gives us the sideways direction relative to the camera
+    QVector3D right = QVector3D::crossProduct(forward, m_cameraUp).normalized();
+
+    if (event->key() == Qt::Key_W)
+    {
+        //moving forward
+        m_cameraPosition += forward * m_cameraSpeed;
+    }
+    else if (event->key() == Qt::Key_S)
+    {
+        //moving backward
+        m_cameraPosition -= forward * m_cameraSpeed;
+    }
+    else if (event->key() == Qt::Key_A)
+    {
+        //moving left
+        m_cameraPosition -= right * m_cameraSpeed;
+    }
+    else if (event->key() == Qt::Key_D)
+    {
+        //moving right
+        m_cameraPosition += right * m_cameraSpeed;
+    }
+    else if (event->key() == Qt::Key_Escape)
+    {
+        //makes cursor visible again to click on artwork if we press esc on keyboard
+        m_mouseLocked = false;
+        setCursor(Qt::ArrowCursor);
+    }
+
+    //need to keep the movement between the walls:
+    m_cameraPosition.setX(qBound(-3.7f, m_cameraPosition.x(), 3.7f));
+    m_cameraPosition.setY(1.6f);
+    m_cameraPosition.setZ(qBound(-7.7f, m_cameraPosition.z(), 0.8f));
+
+    //redraw scene after moving
+    update();
+}
+
+void MuseumWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    //ff mouse look is turned off, do not rotate the camera
+    if (!m_mouseLocked)
+    {
+        return;
+    }
+
+    // When we manually move the cursor back to the center,
+    // Qt may fire another mouseMoveEvent.
+    // We ignore that one so the camera does not jitter.
+    if (m_ignoreNextMouseMove)
+    {
+        m_ignoreNextMouseMove = false;
+        return;
+    }
+
+    //center of the OpenGL widget
+    QPoint center(width() / 2, height() / 2);
+
+    //current mouse position inside the widget
+    QPoint currentMousePosition = event->pos();
+
+    //difference between where the mouse is and the center
+    float xOffset = currentMousePosition.x() - center.x();
+
+    // Y is reversed because screen y increases downward
+    float yOffset = center.y() - currentMousePosition.y();
+
+    //applying sensitivity so the camera does not spin too fast
+    xOffset *= m_mouseSensitivity;
+    yOffset *= m_mouseSensitivity;
+
+    //updating yaw and pitch
+    m_yaw += xOffset;
+    m_pitch += yOffset;
+
+    //prevent camera from flipping upside down
+    if (m_pitch > 89.0f)
+    {
+        m_pitch = 89.0f;
+    }
+
+    if (m_pitch < -89.0f)
+    {
+        m_pitch = -89.0f;
+    }
+
+    //converting yaw/pitch into a direction vector
+    QVector3D direction;
+
+    direction.setX(qCos(qDegreesToRadians(m_yaw)) * qCos(qDegreesToRadians(m_pitch)));
+    direction.setY(qSin(qDegreesToRadians(m_pitch)));
+    direction.setZ(qSin(qDegreesToRadians(m_yaw)) * qCos(qDegreesToRadians(m_pitch)));
+
+    m_cameraFront = direction.normalized();
+
+    //move the cursor back to the center of the widget
+    //mapToGlobal converts the widget center to a screen position
+    m_ignoreNextMouseMove = true;
+    QCursor::setPos(mapToGlobal(center));
+
+    update();
+}
+
+
+void MuseumWidget::mousePressEvent(QMouseEvent * event)
+{
+    Q_UNUSED(event);
+
+    setFocus(); //clicking inside open gl widget gives keyboard focus
+
+    m_mouseLocked = true;
+    setCursor(Qt::BlankCursor);
+
+    //puts cursor in center so movement starts cleanly
+    QPoint center(width() / 2, height() / 2);
+
+    m_ignoreNextMouseMove = true;
+    QCursor::setPos(mapToGlobal(center));
 }
