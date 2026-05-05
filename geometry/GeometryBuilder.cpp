@@ -61,3 +61,36 @@ void GeometryBuilder::addTexturedRectangle(
     vertices.push_back({ c, whiteColor, texC, useTexture, textureIndex });
     vertices.push_back({ d, whiteColor, texD, useTexture, textureIndex });
 }
+
+//helper for the wall texture to not repeat so much
+void GeometryBuilder::addTexturedRectangleTiled(
+    std::vector<Vertex>& vertices,
+    const QVector3D& a,
+    const QVector3D& b,
+    const QVector3D& c,
+    const QVector3D& d,
+    float textureIndex,
+    float tileX,
+    float tileY
+    )
+{
+    QVector3D whiteColor(1.0f, 1.0f, 1.0f);
+    float useTexture = 1.0f;
+
+    // Larger tileX/tileY = more repeating, smaller texture pattern.
+    // Smaller tileX/tileY = less repeating, bigger texture pattern.
+    QVector2D texA(0.0f, 0.0f);
+    QVector2D texB(tileX, 0.0f);
+    QVector2D texC(tileX, tileY);
+    QVector2D texD(0.0f, tileY);
+
+    // Triangle 1
+    vertices.push_back({ a, whiteColor, texA, useTexture, textureIndex });
+    vertices.push_back({ b, whiteColor, texB, useTexture, textureIndex });
+    vertices.push_back({ c, whiteColor, texC, useTexture, textureIndex });
+
+    // Triangle 2
+    vertices.push_back({ a, whiteColor, texA, useTexture, textureIndex });
+    vertices.push_back({ c, whiteColor, texC, useTexture, textureIndex });
+    vertices.push_back({ d, whiteColor, texD, useTexture, textureIndex });
+}

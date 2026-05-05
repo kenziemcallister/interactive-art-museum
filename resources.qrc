@@ -8,4 +8,8 @@
         <file alias="MonaLisa.jpg">assets/artwork/MonaLisa.jpg</file>
         <file alias="Monet.jpg">assets/artwork/Monet.jpg</file>
     </qresource>
+    <qresource prefix="/textures">
+        <file alias="WallTexture.png">assets/textures/WallTexture.png</file>
+        <file alias="FloorTexture.jpg">assets/textures/FloorTexture.jpg</file>
+    </qresource>
 </RCC>

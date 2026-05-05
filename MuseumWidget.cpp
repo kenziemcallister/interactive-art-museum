@@ -120,7 +120,7 @@ void MuseumWidget::initializeGL()
         in float fragUseTexture;
         in float fragTextureIndex;
 
-        uniform sampler2D paintingTextures[8];
+        uniform sampler2D paintingTextures[9];
 
         out vec4 fragColor;
 
@@ -144,8 +144,10 @@ void MuseumWidget::initializeGL()
                     fragColor = texture(paintingTextures[5], fragTexCoord);
                 else if (index == 6)
                     fragColor = texture(paintingTextures[6], fragTexCoord);
-                else
+                else if (index == 7)
                     fragColor = texture(paintingTextures[7], fragTexCoord);
+                else
+                    fragColor = texture(paintingTextures[8], fragTexCoord);
             }
             else
             {
@@ -220,8 +222,8 @@ void MuseumWidget::paintGL()
     }
 
     // Tell the shader which texture units to use.
-    int textureUnits[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-    m_program.setUniformValueArray("paintingTextures", textureUnits, 8);
+    int textureUnits[9] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+    m_program.setUniformValueArray("paintingTextures", textureUnits, 9);
 
     m_vao.bind();
 
@@ -469,7 +471,9 @@ void MuseumWidget::loadPaintingTextures()
             ":/artwork/StarryNight.jpg",
             ":/artwork/FridaKahlo.jpg",
             ":/artwork/MonaLisa.jpg",
-            ":/artwork/Monet.jpg"
+            ":/artwork/Monet.jpg",
+            ":/textures/WallTexture.png",   //7 - wall texture
+            ":/textures/FloorTexture.jpg" //8 - floor texture
         };
 
     for (const QString& path : paintingPaths)
@@ -501,11 +505,10 @@ void MuseumWidget::loadPaintingTextures()
         texture->setData(paintingImage);
 
         // Use simple filters first.
-        // Do NOT use mipmaps yet.
         texture->setMinificationFilter(QOpenGLTexture::Linear);
         texture->setMagnificationFilter(QOpenGLTexture::Linear);
 
-        texture->setWrapMode(QOpenGLTexture::ClampToEdge);
+        texture->setWrapMode(QOpenGLTexture::Repeat);
 
         texture->release();
 

@@ -25,6 +25,17 @@ public:
         const QVector3D& d,
         float textureIndex
         );
+
+    static void addTexturedRectangleTiled(
+        std::vector<Vertex>& vertices,
+        const QVector3D& a,
+        const QVector3D& b,
+        const QVector3D& c,
+        const QVector3D& d,
+        float textureIndex,
+        float tileX,
+        float tileY
+        );
 };
 
 #endif
