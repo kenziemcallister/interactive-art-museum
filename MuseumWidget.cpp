@@ -1,3 +1,18 @@
+/*
+This is the main openGL widget. Owns the OpenGL context and displays the widget
+"Director of the scene"
+In charge of:
+    - openGL setup
+    - shader setup
+    - texture loading
+    - camera position/movement
+    - mouse movement
+    - keyboard interaction
+    - calling the builders (room, painting, etc)
+    - sends final vertex to the GPU
+    - draws the scene
+*/
+
 #include "MuseumWidget.h"
 
 #include "rendering/Vertex.h"
@@ -41,8 +56,12 @@ MuseumWidget::~MuseumWidget()
 {
     makeCurrent();
 
-    delete m_paintingTexture;
-    m_paintingTexture = nullptr;
+    for (QOpenGLTexture* texture : m_paintingTextures)
+    {
+        delete texture;
+    }
+
+    m_paintingTextures.clear();
 
     m_vbo.destroy();
     m_vao.destroy();
@@ -65,94 +84,82 @@ void MuseumWidget::initializeGL()
     // Vertex shader:
     // Takes each vertex position and transforms it by the MVP matrix
     const char *vertexShaderSource = R"(
-    #version 330 core
+        #version 330 core
 
-    layout(location = 0) in vec3 position;
-    layout(location = 1) in vec3 color;
-    layout(location = 2) in vec2 texCoord;
-    layout(location = 3) in float useTexture;
+        layout(location = 0) in vec3 position;
+        layout(location = 1) in vec3 color;
+        layout(location = 2) in vec2 texCoord;
+        layout(location = 3) in float useTexture;
+        layout(location = 4) in float textureIndex;
 
-    uniform mat4 mvp;
+        uniform mat4 mvp;
 
-    out vec3 vertexColor;
-    out vec2 fragTexCoord;
-    out float fragUseTexture;
+        out vec3 vertexColor;
+        out vec2 fragTexCoord;
+        out float fragUseTexture;
+        out float fragTextureIndex;
 
-    void main()
-    {
-        vertexColor = color;
-        fragTexCoord = texCoord;
-        fragUseTexture = useTexture;
+        void main()
+        {
+            vertexColor = color;
+            fragTexCoord = texCoord;
+            fragUseTexture = useTexture;
+            fragTextureIndex = textureIndex;
 
-        gl_Position = mvp * vec4(position, 1.0);
-    }
-)";
+            gl_Position = mvp * vec4(position, 1.0);
+        }
+    )";
 
     // Fragment shader:
     // Controls the final color of each pixel
     const char *fragmentShaderSource = R"(
-    #version 330 core
+        #version 330 core
 
-    in vec3 vertexColor;
-    in vec2 fragTexCoord;
-    in float fragUseTexture;
+        in vec3 vertexColor;
+        in vec2 fragTexCoord;
+        in float fragUseTexture;
+        in float fragTextureIndex;
 
-    uniform sampler2D paintingTexture;
+        uniform sampler2D paintingTextures[8];
 
-    out vec4 fragColor;
+        out vec4 fragColor;
 
-    void main()
-    {
-        if (fragUseTexture > 0.5)
+        void main()
         {
-            fragColor = texture(paintingTexture, fragTexCoord);
+            if (fragUseTexture > 0.5)
+            {
+                int index = int(fragTextureIndex);
+
+                if (index == 0)
+                    fragColor = texture(paintingTextures[0], fragTexCoord);
+                else if (index == 1)
+                    fragColor = texture(paintingTextures[1], fragTexCoord);
+                else if (index == 2)
+                    fragColor = texture(paintingTextures[2], fragTexCoord);
+                else if (index == 3)
+                    fragColor = texture(paintingTextures[3], fragTexCoord);
+                else if (index == 4)
+                    fragColor = texture(paintingTextures[4], fragTexCoord);
+                else if (index == 5)
+                    fragColor = texture(paintingTextures[5], fragTexCoord);
+                else if (index == 6)
+                    fragColor = texture(paintingTextures[6], fragTexCoord);
+                else
+                    fragColor = texture(paintingTextures[7], fragTexCoord);
+            }
+            else
+            {
+                fragColor = vec4(vertexColor, 1.0);
+            }
         }
-        else
-        {
-            fragColor = vec4(vertexColor, 1.0);
-        }
-    }
-)";
+    )";
 
     m_program.addShaderFromSourceCode(QOpenGLShader::Vertex, vertexShaderSource);
     m_program.addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShaderSource);
     m_program.link();
 
     //loading image textures below:
-    QImage paintingImage(":/artwork/Nighthawk.jpg");
-
-    if (paintingImage.isNull())
-    {
-        qDebug() << "Failed to load painting texture!";
-    }
-    else
-    {
-        qDebug() << "Painting texture loaded successfully:"
-                 << paintingImage.width()
-                 << "x"
-                 << paintingImage.height();
-
-        // Convert the image to a format OpenGL likes.
-        paintingImage = paintingImage
-                            .convertToFormat(QImage::Format_RGBA8888)
-                            .flipped(Qt::Vertical);
-
-        m_paintingTexture = new QOpenGLTexture(QOpenGLTexture::Target2D);
-        m_paintingTexture->create();
-        m_paintingTexture->bind();
-
-        m_paintingTexture->setData(paintingImage);
-
-        // Use simple filters first.
-        // Do NOT use mipmaps yet.
-        m_paintingTexture->setMinificationFilter(QOpenGLTexture::Linear);
-        m_paintingTexture->setMagnificationFilter(QOpenGLTexture::Linear);
-
-        m_paintingTexture->setWrapMode(QOpenGLTexture::ClampToEdge);
-
-        m_paintingTexture->release();
-    }
-
+    loadPaintingTextures();
     setupRoomGeometry();
 }
 
@@ -203,12 +210,18 @@ void MuseumWidget::paintGL()
 
     m_program.setUniformValue("mvp", mvp);
 
-    // Bind the painting texture to texture unit 0.
-    if (m_paintingTexture)
+    // Bind each painting texture to a texture unit.
+    for (int i = 0; i < static_cast<int>(m_paintingTextures.size()); i++)
     {
-        m_paintingTexture->bind(0);
-        m_program.setUniformValue("paintingTexture", 0);
+        if (m_paintingTextures[i])
+        {
+            m_paintingTextures[i]->bind(i);
+        }
     }
+
+    // Tell the shader which texture units to use.
+    int textureUnits[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    m_program.setUniformValueArray("paintingTextures", textureUnits, 8);
 
     m_vao.bind();
 
@@ -300,6 +313,17 @@ void MuseumWidget::uploadGeometryToGPU(const std::vector<Vertex>& vertices)
         GL_FALSE,
         sizeof(Vertex),
         reinterpret_cast<void *>(offsetof(Vertex, useTexture))
+        );
+
+    // Attribute 4 = which texture this vertex uses
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(
+        4,
+        1,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(Vertex),
+        reinterpret_cast<void *>(offsetof(Vertex, textureIndex))
         );
 
     m_vbo.release();
@@ -432,4 +456,59 @@ void MuseumWidget::mousePressEvent(QMouseEvent * event)
 
     m_ignoreNextMouseMove = true;
     QCursor::setPos(mapToGlobal(center));
+}
+
+void MuseumWidget::loadPaintingTextures()
+{
+    // All painting images that are compiled into Qt resources.
+    std::vector<QString> paintingPaths =
+        {
+            ":/artwork/Nighthawk.jpg",
+            ":/artwork/Bedroom.jpg",
+            ":/artwork/GeorgiaOkeeffe.jpg",
+            ":/artwork/StarryNight.jpg",
+            ":/artwork/FridaKahlo.jpg",
+            ":/artwork/MonaLisa.jpg",
+            ":/artwork/Monet.jpg"
+        };
+
+    for (const QString& path : paintingPaths)
+    {
+        QImage paintingImage(path);
+
+        if (paintingImage.isNull())
+        {
+            qDebug() << "Failed to load painting texture:" << path;
+            m_paintingTextures.push_back(nullptr);
+            continue;
+        }
+
+        qDebug() << "Painting texture loaded successfully:"
+                 << path
+                 << paintingImage.width()
+                 << "x"
+                 << paintingImage.height();
+
+        // Convert the image to a format OpenGL likes.
+        paintingImage = paintingImage
+                            .convertToFormat(QImage::Format_RGBA8888)
+                            .flipped(Qt::Vertical);
+
+        QOpenGLTexture* texture = new QOpenGLTexture(QOpenGLTexture::Target2D);
+        texture->create();
+        texture->bind();
+
+        texture->setData(paintingImage);
+
+        // Use simple filters first.
+        // Do NOT use mipmaps yet.
+        texture->setMinificationFilter(QOpenGLTexture::Linear);
+        texture->setMagnificationFilter(QOpenGLTexture::Linear);
+
+        texture->setWrapMode(QOpenGLTexture::ClampToEdge);
+
+        texture->release();
+
+        m_paintingTextures.push_back(texture);
+    }
 }

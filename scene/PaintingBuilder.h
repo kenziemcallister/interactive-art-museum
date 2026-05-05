@@ -18,7 +18,7 @@ private:
         float x,
         float width,
         float height,
-        const QVector3D& artColor
+        float textureIndex
         );
 
     static void addPaintingOnRightWall(
@@ -28,7 +28,7 @@ private:
         float x,
         float width,
         float height,
-        const QVector3D& artColor
+        float textureIndex
         );
 
     static void addBackWallFeaturePainting(

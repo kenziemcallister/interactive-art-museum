@@ -22,7 +22,8 @@ public:
         const QVector3D& a,
         const QVector3D& b,
         const QVector3D& c,
-        const QVector3D& d
+        const QVector3D& d,
+        float textureIndex
         );
 };
 

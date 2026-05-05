@@ -1,3 +1,10 @@
+/*
+ * Controls the paintings and frames
+ * Where paintings are, which wall they're on, how big, which texture index
+ * Frame + artwork rectangles
+ * This is the file used to add/remove paintings from the wall
+*/
+
 #include "PaintingBuilder.h"
 
 #include "../geometry/GeometryBuilder.h"
@@ -13,21 +20,21 @@ void PaintingBuilder::addPaintings(std::vector<Vertex>& vertices)
     const float backZ = -22.0f;
 
     // -------------------------
-    // Add placeholder paintings
+    // Add paintings
     // -------------------------
     //
-    // These are colored placeholders for now.
-    // Later, we can replace the artColor with real National Gallery of Art image textures.
+    // These used to be colored placeholders.
+    // Now each painting uses a texture index that matches the texture loaded in MuseumWidget.
 
     // Room 1 left wall paintings
     addPaintingOnLeftWall(
         vertices,
-        -3.0f,      // center z
-        2.2f,       // center y
-        left,       // wall x position
-        2.0f,       // painting width
-        1.3f,       // painting height
-        QVector3D(0.15f, 0.30f, 0.75f) // blue artwork
+        -3.0f,
+        2.2f,
+        left,
+        2.0f,
+        1.3f,
+        1.0f // texture index
         );
 
     addPaintingOnLeftWall(
@@ -37,7 +44,7 @@ void PaintingBuilder::addPaintings(std::vector<Vertex>& vertices)
         left,
         2.0f,
         1.3f,
-        QVector3D(0.70f, 0.25f, 0.15f) // red artwork
+        2.0f // texture index
         );
 
     // Room 1 right wall paintings
@@ -48,28 +55,28 @@ void PaintingBuilder::addPaintings(std::vector<Vertex>& vertices)
         right,
         2.0f,
         1.3f,
-        QVector3D(0.20f, 0.60f, 0.35f) // green artwork
+        3.0f // texture index
         );
 
-    addPaintingOnRightWall(
+    addPaintingOnRightWall( //(portrait)
         vertices,
         -7.0f,
-        2.2f,
+        2.5f,  // slightly higher center y
         right,
-        2.0f,
-        1.3f,
-        QVector3D(0.65f, 0.45f, 0.15f) // gold artwork
+        1.3f,  // portrait width
+        2.0f,  // portrait height
+        4.0f
         );
 
-    // Room 2 left wall paintings
+    // Room 2 left wall paintings (portrait)
     addPaintingOnLeftWall(
         vertices,
         -13.0f,
-        2.2f,
+        2.5f,
         left,
-        2.0f,
         1.3f,
-        QVector3D(0.55f, 0.20f, 0.65f) // purple artwork
+        2.0f,
+        5.0f // texture index
         );
 
     // Room 2 right wall paintings
@@ -80,11 +87,9 @@ void PaintingBuilder::addPaintings(std::vector<Vertex>& vertices)
         right,
         2.0f,
         1.3f,
-        QVector3D(0.10f, 0.55f, 0.65f) // teal artwork
+        6.0f // texture index
         );
 
-    // Large feature painting on the back wall of Room 2.
-    // This one uses an actual image texture.
     addBackWallFeaturePainting(vertices, backZ);
 }
 
@@ -95,7 +100,7 @@ void PaintingBuilder::addPaintingOnLeftWall(
     float x,
     float width,
     float height,
-    const QVector3D& artColor
+    float textureIndex
     )
 {
     // Adds a framed painting on the left wall where x stays constant.
@@ -120,13 +125,13 @@ void PaintingBuilder::addPaintingOnLeftWall(
         );
 
     // Artwork rectangle
-    GeometryBuilder::addColoredRectangle(
+    GeometryBuilder::addTexturedRectangle(
         vertices,
         QVector3D(x + offset * 2.0f, centerY - halfH, centerZ + halfW),
         QVector3D(x + offset * 2.0f, centerY - halfH, centerZ - halfW),
         QVector3D(x + offset * 2.0f, centerY + halfH, centerZ - halfW),
         QVector3D(x + offset * 2.0f, centerY + halfH, centerZ + halfW),
-        artColor
+        textureIndex
         );
 }
 
@@ -137,7 +142,7 @@ void PaintingBuilder::addPaintingOnRightWall(
     float x,
     float width,
     float height,
-    const QVector3D& artColor
+    float textureIndex
     )
 {
     // Adds a framed painting on the right wall where x stays constant.
@@ -162,13 +167,13 @@ void PaintingBuilder::addPaintingOnRightWall(
         );
 
     // Artwork rectangle
-    GeometryBuilder::addColoredRectangle(
+    GeometryBuilder::addTexturedRectangle(
         vertices,
         QVector3D(x - offset * 2.0f, centerY - halfH, centerZ - halfW),
         QVector3D(x - offset * 2.0f, centerY - halfH, centerZ + halfW),
         QVector3D(x - offset * 2.0f, centerY + halfH, centerZ + halfW),
         QVector3D(x - offset * 2.0f, centerY + halfH, centerZ - halfW),
-        artColor
+        textureIndex
         );
 }
 
@@ -208,6 +213,7 @@ void PaintingBuilder::addBackWallFeaturePainting(std::vector<Vertex>& vertices, 
         QVector3D(paintingCenterX - halfW, paintingCenterY - halfH, paintingZ + wallOffset * 2.0f),
         QVector3D(paintingCenterX + halfW, paintingCenterY - halfH, paintingZ + wallOffset * 2.0f),
         QVector3D(paintingCenterX + halfW, paintingCenterY + halfH, paintingZ + wallOffset * 2.0f),
-        QVector3D(paintingCenterX - halfW, paintingCenterY + halfH, paintingZ + wallOffset * 2.0f)
+        QVector3D(paintingCenterX - halfW, paintingCenterY + halfH, paintingZ + wallOffset * 2.0f),
+        0.0f // texture index for Nighthawk / feature painting
         );
 }

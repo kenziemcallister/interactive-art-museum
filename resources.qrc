@@ -1,5 +1,11 @@
 <RCC>
     <qresource prefix="/artwork">
         <file alias="Nighthawk.jpg">assets/artwork/Nighthawk.jpg</file>
+        <file alias="Bedroom.jpg">assets/artwork/Bedroom.jpg</file>
+        <file alias="GeorgiaOkeeffe.jpg">assets/artwork/GeorgiaOkeeffe.jpg</file>
+        <file alias="StarryNight.jpg">assets/artwork/StarryNight.jpg</file>
+        <file alias="FridaKahlo.jpg">assets/artwork/FridaKahlo.jpg</file>
+        <file alias="MonaLisa.jpg">assets/artwork/MonaLisa.jpg</file>
+        <file alias="Monet.jpg">assets/artwork/Monet.jpg</file>
     </qresource>
 </RCC>

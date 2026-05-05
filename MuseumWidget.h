@@ -13,6 +13,7 @@
 #include <QCursor>
 #include <QOpenGLTexture> //for adding texture objects
 #include "rendering/Vertex.h"
+#include <vector>
 
 // This widget is where our 3D museum scene is drawn
 // It inherits from QOpenGLWidget so Qt can place it inside the MainWindow
@@ -46,6 +47,9 @@ private:
     // Creates the vertices for our simple room
     void setupRoomGeometry();
     void uploadGeometryToGPU(const std::vector<Vertex>& vertices);
+    void loadPaintingTextures();
+    std::vector<QOpenGLTexture*> m_paintingTextures;
+
 
 private:
     QOpenGLShaderProgram m_program;
@@ -77,7 +81,6 @@ private:
     bool m_mouseLocked = true;
     bool m_ignoreNextMouseMove = false;
 
-    QOpenGLTexture *m_paintingTexture = nullptr;
 };
 
 #endif // MUSEUMWIDGET_H

@@ -1,3 +1,18 @@
+/*
+ * Responsible for building the physical museum space.
+ * Creates:
+ *  - room size
+ *  - floor
+ *  - ceiling
+ *  - left wall
+ *  - right wall
+ *  - front wall
+ *  - back wall
+ *  - middle wall
+ *  - doorway opening
+ *  - basic room colors
+*/
+
 #include "../scene/RoomBuilder.h"
 #include "../rendering/Vertex.h"
 
@@ -17,6 +32,7 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
     //
     // The shared wall at middleZ has a doorway cut into it.
 
+    //room constants below (this wide, ths high, doorway location, etc)
     const float left = -6.0f;
     const float right = 6.0f;
 
