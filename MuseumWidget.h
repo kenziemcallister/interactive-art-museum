@@ -11,6 +11,8 @@
 #include <QKeyEvent> //used for using keyboard keys when moving the camera
 #include <QMouseEvent> //used for using the mouse to look around
 #include <QCursor>
+#include <QOpenGLTexture> //for adding texture objects
+#include "rendering/Vertex.h"
 
 // This widget is where our 3D museum scene is drawn
 // It inherits from QOpenGLWidget so Qt can place it inside the MainWindow
@@ -43,6 +45,7 @@ protected:
 private:
     // Creates the vertices for our simple room
     void setupRoomGeometry();
+    void uploadGeometryToGPU(const std::vector<Vertex>& vertices);
 
 private:
     QOpenGLShaderProgram m_program;
@@ -73,6 +76,8 @@ private:
 
     bool m_mouseLocked = true;
     bool m_ignoreNextMouseMove = false;
+
+    QOpenGLTexture *m_paintingTexture = nullptr;
 };
 
 #endif // MUSEUMWIDGET_H

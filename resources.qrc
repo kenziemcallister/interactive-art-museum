@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/artwork">
+        <file alias="Nighthawk.jpg">assets/artwork/Nighthawk.jpg</file>
+    </qresource>
+</RCC>

@@ -5,6 +5,8 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets)
 
 qt_standard_project_setup()
 
+set(CMAKE_AUTORCC ON)
+
 qt_add_executable(ArtMuseum
     WIN32 MACOSX_BUNDLE
 
@@ -16,7 +18,15 @@ qt_add_executable(ArtMuseum
 
     MuseumWidget.cpp
     MuseumWidget.h
-    MuseumWidget.h MuseumWidget.cpp
+    MuseumWidget.h
+    resources.qrc
+    rendering/Vertex.h
+    geometry/GeometryBuilder.h
+    geometry/GeometryBuilder.cpp
+    scene/RoomBuilder.cpp
+    scene/RoomBuilder.h
+    scene/PaintingBuilder.h
+    scene/PaintingBuilder.cpp
 )
 
 target_link_libraries(ArtMuseum
