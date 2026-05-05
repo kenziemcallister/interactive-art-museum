@@ -369,7 +369,7 @@ void MuseumWidget::keyPressEvent(QKeyEvent *event)
     }
 
     //need to keep the movement between the walls:
-    m_cameraPosition.setX(qBound(-5.7f, m_cameraPosition.x(), 5.7f));
+    m_cameraPosition.setX(qBound(-5.7f, m_cameraPosition.x(), 17.7f));
     m_cameraPosition.setY(1.8f);
     m_cameraPosition.setZ(qBound(-21.7f, m_cameraPosition.z(), 1.7f));
 

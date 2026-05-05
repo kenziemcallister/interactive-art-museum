@@ -1,6 +1,6 @@
 /*
  This file defines what one vertex contains
- Vertex == one point of a triangle. All geomtry is made of triangles
+ Vertex == one point of a triangle. All geometry is made of triangles
  So every wall, floor, frame, and painting is built from the struct below
 */
 

@@ -31,6 +31,8 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
     // Room 2 goes from middleZ to backZ.
     //
     // The shared wall at middleZ has a doorway cut into it.
+    //
+    // Room 3 branches off the right wall of Room 2.
 
     //room constants below (this wide, ths high, doorway location, etc)
     const float left = -6.0f;
@@ -43,10 +45,23 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
     const float middleZ = -10.0f;
     const float backZ = -22.0f;
 
-    // Doorway dimensions on the wall between Room 1 and Room 2.
+    //this room starts at the right wall of Room 2 and extends farther right
+    const float room3Left = right;
+    const float room3Right = 18.0f;
+
+    const float room3FrontZ = -16.0f;
+    const float room3BackZ = -22.0f;
+
+    //doorway dimensions on the wall between Room 1 and Room 2
     const float doorLeft = -1.5f;
     const float doorRight = 1.5f;
     const float doorTop = 3.0f;
+
+    // Doorway dimensions on the right wall of Room 2 into Room 3.
+    // Since this door is on a wall where x stays constant,
+    // the opening is controlled by z values instead of x values.
+    const float sideDoorFrontZ = -17.0f;
+    const float sideDoorBackZ = -20.0f;
 
     // Simple colors for now.
     QVector3D floorColor(0.45f, 0.38f, 0.30f);
@@ -152,6 +167,48 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
             );
     };
 
+    // Helper function:
+    // Adds a wall at a constant x value, but leaves a rectangular doorway open.
+    //
+    // This is used for the doorway from Room 2 into Room 3.
+    // Since this wall is on the side, the doorway opening uses z positions.
+    auto addWallWithDoorAtX = [&](float x,
+                                  float zFront,
+                                  float zBack,
+                                  float doorFrontZ,
+                                  float doorBackZ)
+    {
+        // Front piece of wall before doorway
+        GeometryBuilder::addColoredRectangle(
+            vertices,
+            QVector3D(x, floorY,   zFront),
+            QVector3D(x, floorY,   doorFrontZ),
+            QVector3D(x, ceilingY, doorFrontZ),
+            QVector3D(x, ceilingY, zFront),
+            sideWallColor
+            );
+
+        // Back piece of wall after doorway
+        GeometryBuilder::addColoredRectangle(
+            vertices,
+            QVector3D(x, floorY,   doorBackZ),
+            QVector3D(x, floorY,   zBack),
+            QVector3D(x, ceilingY, zBack),
+            QVector3D(x, ceilingY, doorBackZ),
+            sideWallColor
+            );
+
+        // Top piece of wall above doorway
+        GeometryBuilder::addColoredRectangle(
+            vertices,
+            QVector3D(x, doorTop,  doorFrontZ),
+            QVector3D(x, doorTop,  doorBackZ),
+            QVector3D(x, ceilingY, doorBackZ),
+            QVector3D(x, ceilingY, doorFrontZ),
+            sideWallColor
+            );
+    };
+
     // -------------------------
     // Build the museum layout
     // -------------------------
@@ -159,8 +216,99 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
     // Room 1 shell
     addRoomShell(frontZ, middleZ);
 
-    // Room 2 shell
-    addRoomShell(middleZ, backZ);
+    // Room 2 is built manually instead of using addRoomShell.
+    // This is because Room 2 needs a doorway on its right wall into Room 3.
+
+    // Room 2 floor
+    GeometryBuilder::addColoredRectangle(
+        vertices,
+        QVector3D(left,  floorY, middleZ),
+        QVector3D(right, floorY, middleZ),
+        QVector3D(right, floorY, backZ),
+        QVector3D(left,  floorY, backZ),
+        floorColor
+        );
+
+    // Room 2 ceiling
+    GeometryBuilder::addColoredRectangle(
+        vertices,
+        QVector3D(left,  ceilingY, middleZ),
+        QVector3D(left,  ceilingY, backZ),
+        QVector3D(right, ceilingY, backZ),
+        QVector3D(right, ceilingY, middleZ),
+        ceilingColor
+        );
+
+    // Room 2 left wall
+    GeometryBuilder::addColoredRectangle(
+        vertices,
+        QVector3D(left, floorY,   middleZ),
+        QVector3D(left, floorY,   backZ),
+        QVector3D(left, ceilingY, backZ),
+        QVector3D(left, ceilingY, middleZ),
+        sideWallColor
+        );
+
+    // Room 2 right wall with doorway into Room 3
+    addWallWithDoorAtX(
+        right,
+        middleZ,
+        backZ,
+        sideDoorFrontZ,
+        sideDoorBackZ
+        );
+
+    // Room 3 branches off the right side of Room 2.
+
+    // Room 3 floor
+    GeometryBuilder::addColoredRectangle(
+        vertices,
+        QVector3D(room3Left,  floorY, room3FrontZ),
+        QVector3D(room3Right, floorY, room3FrontZ),
+        QVector3D(room3Right, floorY, room3BackZ),
+        QVector3D(room3Left,  floorY, room3BackZ),
+        floorColor
+        );
+
+    // Room 3 ceiling
+    GeometryBuilder::addColoredRectangle(
+        vertices,
+        QVector3D(room3Left,  ceilingY, room3FrontZ),
+        QVector3D(room3Left,  ceilingY, room3BackZ),
+        QVector3D(room3Right, ceilingY, room3BackZ),
+        QVector3D(room3Right, ceilingY, room3FrontZ),
+        ceilingColor
+        );
+
+    // Room 3 far right wall
+    GeometryBuilder::addColoredRectangle(
+        vertices,
+        QVector3D(room3Right, floorY,   room3BackZ),
+        QVector3D(room3Right, floorY,   room3FrontZ),
+        QVector3D(room3Right, ceilingY, room3FrontZ),
+        QVector3D(room3Right, ceilingY, room3BackZ),
+        sideWallColor
+        );
+
+    // Room 3 front wall
+    GeometryBuilder::addColoredRectangle(
+        vertices,
+        QVector3D(room3Left,  floorY,   room3FrontZ),
+        QVector3D(room3Right, floorY,   room3FrontZ),
+        QVector3D(room3Right, ceilingY, room3FrontZ),
+        QVector3D(room3Left,  ceilingY, room3FrontZ),
+        wallColor
+        );
+
+    // Room 3 back wall
+    GeometryBuilder::addColoredRectangle(
+        vertices,
+        QVector3D(room3Right, floorY,   room3BackZ),
+        QVector3D(room3Left,  floorY,   room3BackZ),
+        QVector3D(room3Left,  ceilingY, room3BackZ),
+        QVector3D(room3Right, ceilingY, room3BackZ),
+        wallColor
+        );
 
     // Front wall of Room 1.
     // This is behind the player at the start.
@@ -170,5 +318,7 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
     addWallWithDoorAtZ(middleZ);
 
     // Back wall of Room 2.
+    // This only covers Room 2 from left to right.
+    // Room 3 has its own back wall above.
     addSolidWallAtZ(backZ);
 }
