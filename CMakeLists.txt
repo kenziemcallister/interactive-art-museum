@@ -18,20 +18,32 @@ qt_add_executable(ArtMuseum
 
     MuseumWidget.cpp
     MuseumWidget.h
-    MuseumWidget.h
     resources.qrc
+
     rendering/Vertex.h
     geometry/GeometryBuilder.h
     geometry/GeometryBuilder.cpp
+
     scene/RoomBuilder.cpp
     scene/RoomBuilder.h
+
     scene/PaintingBuilder.h
     scene/PaintingBuilder.cpp
+
     assets/textures/WallTexture.png
     assets/textures/FloorTexture.jpg
     scene/ClickableArtwork.h
     assets/textures/CeilingTexture.jpg
+
+    scene/SculptureBuilder.cpp
+    scene/SculptureBuilder.h
+    scene/tiny_obj_loader.h
 )
+
+# --- ASSIMP CONFIGURATION ---
+# these paths are unique to each machine... so Kenzie if you download, move vcpkg to C:/Users/ or put in your own filepath here
+#target_include_directories(ArtMuseum PRIVATE "C:/Users/vcpkg/installed/x64-windows/include")
+#target_link_libraries(ArtMuseum PRIVATE "C:/Users/vcpkg/installed/x64-windows/lib/assimp-vc143-mt.lib")
 
 target_link_libraries(ArtMuseum
     PRIVATE

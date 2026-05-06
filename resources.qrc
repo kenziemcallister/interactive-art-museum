@@ -13,4 +13,9 @@
         <file alias="FloorTexture.jpg">assets/textures/FloorTexture.jpg</file>
         <file alias="CeilingTexture.jpg">assets/textures/CeilingTexture.jpg</file>
     </qresource>
+    <qresource prefix="/sculptures">
+        <file alias="oAM.mtl">assets/sculptures/oldArrowMaker/oldArrowMaker.mtl</file>
+        <file alias="oAM.jpg">assets/sculptures/oldArrowMaker/oldArrowMaker.jpg</file>
+        <file alias="oAM.obj">assets/sculptures/oldArrowMaker/oldArrowMaker.obj</file>
+    </qresource>
 </RCC>

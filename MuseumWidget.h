@@ -1,17 +1,17 @@
 #ifndef MUSEUMWIDGET_H
 #define MUSEUMWIDGET_H
 
-#include <QOpenGLWidget>
+#include <QCursor>
+#include <QKeyEvent> //used for using keyboard keys when moving the camera
+#include <QMatrix4x4>
+#include <QMouseEvent> //used for using the mouse to look around
+#include <QOpenGLBuffer>
 #include <QOpenGLFunctions_3_3_Core>
 #include <QOpenGLShaderProgram>
-#include <QOpenGLBuffer>
-#include <QOpenGLVertexArrayObject>
-#include <QMatrix4x4>
-#include <QVector3D>
-#include <QKeyEvent> //used for using keyboard keys when moving the camera
-#include <QMouseEvent> //used for using the mouse to look around
-#include <QCursor>
 #include <QOpenGLTexture> //for adding texture objects
+#include <QOpenGLVertexArrayObject>
+#include <QOpenGLWidget>
+#include <QVector3D>
 #include "rendering/Vertex.h"
 #include <vector>
 #include "scene/ClickableArtwork.h"
@@ -37,18 +37,20 @@ protected:
     void paintGL() override;
 
     //this function helps us respond when the user presses W,A,S, or D
-    void keyPressEvent(QKeyEvent * event) override;
+    void keyPressEvent(QKeyEvent *event) override;
 
     //this helps us use the mouse to look around the rooms
-    void mouseMoveEvent(QMouseEvent * event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
 
-    void mousePressEvent(QMouseEvent * event) override;
+    void mousePressEvent(QMouseEvent *event) override;
 
 private:
     // Creates the vertices for our simple room
     void setupRoomGeometry();
-    void uploadGeometryToGPU(const std::vector<Vertex>& vertices);
+    void uploadGeometryToGPU(const std::vector<Vertex> &vertices);
     void loadPaintingTextures();
+    void loadSculptureTexture();
+
     std::vector<QOpenGLTexture*> m_paintingTextures;
     std::vector<ClickableArtwork> m_clickableArtworks;
 
@@ -61,7 +63,6 @@ private:
         const ClickableArtwork& artwork,
         float& distance
         );
-
 
 private:
     QOpenGLShaderProgram m_program;
@@ -93,6 +94,8 @@ private:
     bool m_mouseLocked = true;
     bool m_ignoreNextMouseMove = false;
 
+    // texture variable
+    QOpenGLTexture* m_sculptureTexture = nullptr;
 };
 
 #endif // MUSEUMWIDGET_H
