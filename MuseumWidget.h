@@ -14,6 +14,7 @@
 #include <QOpenGLTexture> //for adding texture objects
 #include "rendering/Vertex.h"
 #include <vector>
+#include "scene/ClickableArtwork.h"
 
 // This widget is where our 3D museum scene is drawn
 // It inherits from QOpenGLWidget so Qt can place it inside the MainWindow
@@ -49,6 +50,17 @@ private:
     void uploadGeometryToGPU(const std::vector<Vertex>& vertices);
     void loadPaintingTextures();
     std::vector<QOpenGLTexture*> m_paintingTextures;
+    std::vector<ClickableArtwork> m_clickableArtworks;
+
+    void showArtworkPopup(const ClickableArtwork& artwork);
+
+    QVector3D createRayFromMouseClick(const QPoint& mousePosition);
+    bool rayIntersectsArtwork(
+        const QVector3D& rayOrigin,
+        const QVector3D& rayDirection,
+        const ClickableArtwork& artwork,
+        float& distance
+        );
 
 
 private:

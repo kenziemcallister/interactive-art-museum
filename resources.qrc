@@ -11,5 +11,6 @@
     <qresource prefix="/textures">
         <file alias="WallTexture.png">assets/textures/WallTexture.png</file>
         <file alias="FloorTexture.jpg">assets/textures/FloorTexture.jpg</file>
+        <file alias="CeilingTexture.jpg">assets/textures/CeilingTexture.jpg</file>
     </qresource>
 </RCC>

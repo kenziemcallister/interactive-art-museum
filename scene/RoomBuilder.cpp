@@ -88,13 +88,15 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
             );
 
         // Ceiling
-        GeometryBuilder::addColoredRectangle(
+        GeometryBuilder::addTexturedRectangleTiled(
             vertices,
             QVector3D(left,  ceilingY, zFront),
             QVector3D(left,  ceilingY, zBack),
             QVector3D(right, ceilingY, zBack),
             QVector3D(right, ceilingY, zFront),
-            ceilingColor
+            9.0f,
+            1.5f,
+            1.5f
             );
 
         // Left wall
@@ -248,13 +250,15 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
         );
 
     // Room 2 ceiling
-    GeometryBuilder::addColoredRectangle(
+    GeometryBuilder::addTexturedRectangleTiled(
         vertices,
         QVector3D(left,  ceilingY, middleZ),
         QVector3D(left,  ceilingY, backZ),
         QVector3D(right, ceilingY, backZ),
         QVector3D(right, ceilingY, middleZ),
-        ceilingColor
+        9.0f,
+        1.5f,
+        1.5f
         );
 
     // Room 2 left wall
@@ -293,13 +297,15 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
         );
 
     // Room 3 ceiling
-    GeometryBuilder::addColoredRectangle(
+    GeometryBuilder::addTexturedRectangleTiled(
         vertices,
         QVector3D(room3Left,  ceilingY, room3FrontZ),
         QVector3D(room3Left,  ceilingY, room3BackZ),
         QVector3D(room3Right, ceilingY, room3BackZ),
         QVector3D(room3Right, ceilingY, room3FrontZ),
-        ceilingColor
+        9.0f,
+        1.5,
+        1.5
         );
 
     // Room 3 far right wall

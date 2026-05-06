@@ -25,6 +25,16 @@ In charge of:
 #include <QtMath>
 #include <QImage>
 #include <QDebug>
+#include <QMessageBox>
+#include <limits>
+#include <QVector4D>
+//pop up window includes
+#include <QDialog>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QPushButton>
+#include <QFrame>
 
 MuseumWidget::MuseumWidget(QWidget *parent)
     : QOpenGLWidget(parent),
@@ -120,7 +130,7 @@ void MuseumWidget::initializeGL()
         in float fragUseTexture;
         in float fragTextureIndex;
 
-        uniform sampler2D paintingTextures[9];
+        uniform sampler2D paintingTextures[10];
 
         out vec4 fragColor;
 
@@ -146,8 +156,10 @@ void MuseumWidget::initializeGL()
                     fragColor = texture(paintingTextures[6], fragTexCoord);
                 else if (index == 7)
                     fragColor = texture(paintingTextures[7], fragTexCoord);
-                else
+                else if (index == 8)
                     fragColor = texture(paintingTextures[8], fragTexCoord);
+                else if (index == 9)
+                    fragColor = texture(paintingTextures[9], fragTexCoord);
             }
             else
             {
@@ -222,8 +234,8 @@ void MuseumWidget::paintGL()
     }
 
     // Tell the shader which texture units to use.
-    int textureUnits[9] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
-    m_program.setUniformValueArray("paintingTextures", textureUnits, 9);
+    int textureUnits[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    m_program.setUniformValueArray("paintingTextures", textureUnits, 10);
 
     m_vao.bind();
 
@@ -247,12 +259,13 @@ void MuseumWidget::setupRoomGeometry()
     // The shared wall at middleZ has a doorway cut into it.
 
     std::vector<Vertex> vertices;
+    m_clickableArtworks.clear();
 
     // Build the walls, floor, ceiling, and doorway.
     RoomBuilder::addMuseumRooms(vertices);
 
     // Add all painting frames and artwork rectangles.
-    PaintingBuilder::addPaintings(vertices);
+    PaintingBuilder::addPaintings(vertices, m_clickableArtworks);
 
     // Send geometry to OpenGL.
     uploadGeometryToGPU(vertices);
@@ -446,9 +459,33 @@ void MuseumWidget::mouseMoveEvent(QMouseEvent *event)
 
 void MuseumWidget::mousePressEvent(QMouseEvent * event)
 {
-    Q_UNUSED(event);
-
     setFocus(); //clicking inside open gl widget gives keyboard focus
+
+    QVector3D rayOrigin = m_cameraPosition;
+    QVector3D rayDirection = createRayFromMouseClick(event->pos());
+
+    float closestDistance = std::numeric_limits<float>::max();
+    const ClickableArtwork* closestArtwork = nullptr;
+
+    for (const ClickableArtwork& artwork : m_clickableArtworks)
+    {
+        float distance = 0.0f;
+
+        if (rayIntersectsArtwork(rayOrigin, rayDirection, artwork, distance))
+        {
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestArtwork = &artwork;
+            }
+        }
+    }
+
+    if (closestArtwork != nullptr)
+    {
+        showArtworkPopup(*closestArtwork);
+        return;
+    }
 
     m_mouseLocked = true;
     setCursor(Qt::BlankCursor);
@@ -473,7 +510,8 @@ void MuseumWidget::loadPaintingTextures()
             ":/artwork/MonaLisa.jpg",
             ":/artwork/Monet.jpg",
             ":/textures/WallTexture.png",   //7 - wall texture
-            ":/textures/FloorTexture.jpg" //8 - floor texture
+            ":/textures/FloorTexture.jpg", //8 - floor texture
+            ":/textures/CeilingTexture.jpg" //9 = ceiling texture
         };
 
     for (const QString& path : paintingPaths)
@@ -514,4 +552,246 @@ void MuseumWidget::loadPaintingTextures()
 
         m_paintingTextures.push_back(texture);
     }
+}
+
+//Gives the ray direction. Ray origin is the camera
+QVector3D MuseumWidget::createRayFromMouseClick(const QPoint& mousePosition)
+{
+    // Convert mouse position from screen pixels into normalized device coordinates.
+    // x goes from -1 to 1.
+    // y goes from -1 to 1, but screen y is flipped.
+    float x = (2.0f * mousePosition.x()) / width() - 1.0f;
+    float y = 1.0f - (2.0f * mousePosition.y()) / height();
+
+    // Start ray in clip space.
+    QVector4D rayClip(x, y, -1.0f, 1.0f);
+
+    // Move ray from clip space into eye/camera space.
+    QMatrix4x4 inverseProjection = m_projection.inverted();
+    QVector4D rayEye = inverseProjection * rayClip;
+
+    // We want a direction, not a point, so z = -1 and w = 0.
+    rayEye = QVector4D(rayEye.x(), rayEye.y(), -1.0f, 0.0f);
+
+    // Rebuild the same view matrix used in paintGL().
+    QMatrix4x4 view;
+    view.lookAt(m_cameraPosition, m_cameraPosition + m_cameraFront, m_cameraUp);
+
+    // Move ray from camera space into world space.
+    QMatrix4x4 inverseView = view.inverted();
+    QVector4D rayWorld4 = inverseView * rayEye;
+
+    QVector3D rayWorld(rayWorld4.x(), rayWorld4.y(), rayWorld4.z());
+    return rayWorld.normalized();
+}
+
+static bool rayIntersectsTriangle(
+    const QVector3D& rayOrigin,
+    const QVector3D& rayDirection,
+    const QVector3D& v0,
+    const QVector3D& v1,
+    const QVector3D& v2,
+    float& distance
+    )
+{
+    // Moller-Trumbore ray-triangle intersection.
+    const float EPSILON = 0.000001f;
+
+    QVector3D edge1 = v1 - v0;
+    QVector3D edge2 = v2 - v0;
+
+    QVector3D h = QVector3D::crossProduct(rayDirection, edge2);
+    float a = QVector3D::dotProduct(edge1, h);
+
+    if (a > -EPSILON && a < EPSILON)
+    {
+        return false;
+    }
+
+    float f = 1.0f / a;
+    QVector3D s = rayOrigin - v0;
+    float u = f * QVector3D::dotProduct(s, h);
+
+    if (u < 0.0f || u > 1.0f)
+    {
+        return false;
+    }
+
+    QVector3D q = QVector3D::crossProduct(s, edge1);
+    float v = f * QVector3D::dotProduct(rayDirection, q);
+
+    if (v < 0.0f || u + v > 1.0f)
+    {
+        return false;
+    }
+
+    float t = f * QVector3D::dotProduct(edge2, q);
+
+    if (t > EPSILON)
+    {
+        distance = t;
+        return true;
+    }
+
+    return false;
+}
+
+bool MuseumWidget::rayIntersectsArtwork(
+    const QVector3D& rayOrigin,
+    const QVector3D& rayDirection,
+    const ClickableArtwork& artwork,
+    float& distance
+    )
+{
+    float distance1 = 0.0f;
+    float distance2 = 0.0f;
+
+    bool hitFirstTriangle = rayIntersectsTriangle(
+        rayOrigin,
+        rayDirection,
+        artwork.a,
+        artwork.b,
+        artwork.c,
+        distance1
+        );
+
+    bool hitSecondTriangle = rayIntersectsTriangle(
+        rayOrigin,
+        rayDirection,
+        artwork.a,
+        artwork.c,
+        artwork.d,
+        distance2
+        );
+
+    if (hitFirstTriangle && hitSecondTriangle)
+    {
+        distance = qMin(distance1, distance2);
+        return true;
+    }
+
+    if (hitFirstTriangle)
+    {
+        distance = distance1;
+        return true;
+    }
+
+    if (hitSecondTriangle)
+    {
+        distance = distance2;
+        return true;
+    }
+
+    return false;
+}
+
+void MuseumWidget::showArtworkPopup(const ClickableArtwork& artwork)
+{
+    QDialog dialog(this);
+    dialog.setWindowTitle(artwork.title);
+    dialog.setModal(true);
+    dialog.resize(460, 320);
+
+    // Main layout for the popup
+    QVBoxLayout* mainLayout = new QVBoxLayout(&dialog);
+    mainLayout->setContentsMargins(28, 26, 28, 22);
+    mainLayout->setSpacing(12);
+
+    // Title label
+    QLabel* titleLabel = new QLabel(artwork.title);
+    titleLabel->setWordWrap(true);
+    titleLabel->setAlignment(Qt::AlignCenter);
+    titleLabel->setStyleSheet(
+        "font-size: 23px;"
+        "font-weight: bold;"
+        "letter-spacing: 0.5px;"
+        "color: #28464a;" // dark muted teal
+        );
+
+    // Artist label
+    QLabel* artistLabel = new QLabel("Artist: " + artwork.artist);
+    artistLabel->setWordWrap(true);
+    artistLabel->setAlignment(Qt::AlignCenter);
+    artistLabel->setStyleSheet(
+        "font-size: 15px;"
+        "font-style: italic;"
+        "color: #6e5a73;" // dusty purple
+        );
+
+    // Divider line
+    QFrame* divider = new QFrame();
+    divider->setFrameShape(QFrame::HLine);
+    divider->setFrameShadow(QFrame::Plain);
+    divider->setStyleSheet(
+        "background-color: #8aa3a1;" // muted teal-gray
+        "max-height: 1px;"
+        );
+
+    // Description label
+    QLabel* descriptionLabel = new QLabel(artwork.description);
+    descriptionLabel->setWordWrap(true);
+    descriptionLabel->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    descriptionLabel->setStyleSheet(
+        "font-size: 14px;"
+        "color: #303a3b;" // dark gray teal
+        "line-height: 140%;"
+        );
+
+    // Hint label
+    QLabel* hintLabel = new QLabel("Click Close to return to the museum.");
+    hintLabel->setAlignment(Qt::AlignCenter);
+    hintLabel->setStyleSheet(
+        "font-size: 11px;"
+        "font-style: italic;"
+        "color: #6f7f80;"
+        );
+
+    // Close button
+    QPushButton* closeButton = new QPushButton("Close");
+    closeButton->setCursor(Qt::PointingHandCursor);
+    closeButton->setFixedWidth(100);
+    closeButton->setStyleSheet(
+        "QPushButton {"
+        "   background-color: #6e5a73;" // dusty purple
+        "   color: #edf5f2;"
+        "   border: 1px solid #4d3f52;"
+        "   border-radius: 7px;"
+        "   padding: 8px 16px;"
+        "   font-size: 13px;"
+        "   font-weight: bold;"
+        "}"
+        "QPushButton:hover {"
+        "   background-color: #7f6a86;"
+        "}"
+        "QPushButton:pressed {"
+        "   background-color: #514057;"
+        "}"
+        );
+
+    // Put the close button in the center
+    QHBoxLayout* buttonLayout = new QHBoxLayout();
+    buttonLayout->addStretch();
+    buttonLayout->addWidget(closeButton);
+    buttonLayout->addStretch();
+
+    mainLayout->addWidget(titleLabel);
+    mainLayout->addWidget(artistLabel);
+    mainLayout->addWidget(divider);
+    mainLayout->addWidget(descriptionLabel);
+    mainLayout->addStretch();
+    mainLayout->addWidget(hintLabel);
+    mainLayout->addLayout(buttonLayout);
+
+    // Museum plaque styling, matched to the teal/purple floor palette
+    dialog.setStyleSheet(
+        "QDialog {"
+        "   background-color: #d8e3df;" // pale muted teal
+        "   border: 3px solid #6e5a73;" // dusty purple border
+        "   border-radius: 14px;"
+        "}"
+        );
+
+    connect(closeButton, &QPushButton::clicked, &dialog, &QDialog::accept);
+
+    dialog.exec();
 }

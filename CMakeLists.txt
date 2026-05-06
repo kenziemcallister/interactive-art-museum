@@ -29,6 +29,8 @@ qt_add_executable(ArtMuseum
     scene/PaintingBuilder.cpp
     assets/textures/WallTexture.png
     assets/textures/FloorTexture.jpg
+    scene/ClickableArtwork.h
+    assets/textures/CeilingTexture.jpg
 )
 
 target_link_libraries(ArtMuseum
