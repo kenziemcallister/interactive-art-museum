@@ -94,3 +94,79 @@ void GeometryBuilder::addTexturedRectangleTiled(
     vertices.push_back({ c, whiteColor, texC, useTexture, textureIndex });
     vertices.push_back({ d, whiteColor, texD, useTexture, textureIndex });
 }
+
+void GeometryBuilder::addStool(
+    std::vector<Vertex>& vertices,
+    const QVector3D& center,
+    float width,
+    float depth,
+    float height,
+    const QVector3D& color,
+    float offset
+    )
+{
+    float halfW = width * 0.5f;
+    float halfD = depth * 0.5f;
+    float topY = center.y();
+    float bottomY = center.y() - height;
+
+    // Top face (slightly offset upward to avoid z-fighting with floor)
+    GeometryBuilder::addColoredRectangle(
+        vertices,
+        QVector3D(center.x() - halfW, topY, center.z() + halfD),
+        QVector3D(center.x() + halfW, topY, center.z() + halfD),
+        QVector3D(center.x() + halfW, topY, center.z() - halfD),
+        QVector3D(center.x() - halfW, topY, center.z() - halfD),
+        color
+        );
+
+    // Bottom face (underside)
+    GeometryBuilder::addColoredRectangle(
+        vertices,
+        QVector3D(center.x() - halfW, bottomY, center.z() - halfD),
+        QVector3D(center.x() + halfW, bottomY, center.z() - halfD),
+        QVector3D(center.x() + halfW, bottomY, center.z() + halfD),
+        QVector3D(center.x() - halfW, bottomY, center.z() + halfD),
+        color
+        );
+
+    // Front face (toward -Z)
+    GeometryBuilder::addColoredRectangle(
+        vertices,
+        QVector3D(center.x() - halfW, bottomY, center.z() - halfD - offset),
+        QVector3D(center.x() + halfW, bottomY, center.z() - halfD - offset),
+        QVector3D(center.x() + halfW, topY,    center.z() - halfD - offset),
+        QVector3D(center.x() - halfW, topY,    center.z() - halfD - offset),
+        color
+        );
+
+    // Back face (toward +Z)
+    GeometryBuilder::addColoredRectangle(
+        vertices,
+        QVector3D(center.x() + halfW, bottomY, center.z() + halfD + offset),
+        QVector3D(center.x() - halfW, bottomY, center.z() + halfD + offset),
+        QVector3D(center.x() - halfW, topY,    center.z() + halfD + offset),
+        QVector3D(center.x() + halfW, topY,    center.z() + halfD + offset),
+        color
+        );
+
+    // Left face (toward -X)
+    GeometryBuilder::addColoredRectangle(
+        vertices,
+        QVector3D(center.x() - halfW, bottomY, center.z() + halfD),
+        QVector3D(center.x() - halfW, bottomY, center.z() - halfD),
+        QVector3D(center.x() - halfW, topY,    center.z() - halfD),
+        QVector3D(center.x() - halfW, topY,    center.z() + halfD),
+        color
+        );
+
+    // Right face (toward +X)
+    GeometryBuilder::addColoredRectangle(
+        vertices,
+        QVector3D(center.x() + halfW, bottomY, center.z() - halfD),
+        QVector3D(center.x() + halfW, bottomY, center.z() + halfD),
+        QVector3D(center.x() + halfW, topY,    center.z() + halfD),
+        QVector3D(center.x() + halfW, topY,    center.z() - halfD),
+        color
+        );
+}

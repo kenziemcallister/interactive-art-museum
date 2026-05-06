@@ -36,6 +36,19 @@ public:
         float tileX,
         float tileY
         );
+
+    // Adds a simple rectangular stool (solid box) centered at `center`.
+    // width = size along X, depth = size along Z, height = size along Y.
+    // color is the RGB color of all faces. offset avoids Z-fighting with floor.
+    static void addStool(
+        std::vector<Vertex>& vertices,
+        const QVector3D& center,
+        float width,
+        float depth,
+        float height,
+        const QVector3D& color,
+        float offset = 0.02f
+        );
 };
 
 #endif

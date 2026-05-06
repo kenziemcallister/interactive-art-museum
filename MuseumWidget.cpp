@@ -19,6 +19,7 @@ In charge of:
 #include "scene/PaintingBuilder.h"
 #include "scene/RoomBuilder.h"
 #include "scene/SculptureBuilder.h"
+#include "geometry/GeometryBuilder.h"
 
 #include <QDebug>
 #include <QImage>
@@ -124,7 +125,8 @@ void MuseumWidget::initializeGL()
         in float fragUseTexture;
         in float fragTextureIndex;
 
-        uniform sampler2D paintingTextures[8];
+        // increased size to cover paintings & room textures & sculpture
+        uniform sampler2D paintingTextures[12];
         //uniform sampler2D sculptureTexture;
 
         out vec4 fragColor;
@@ -149,8 +151,16 @@ void MuseumWidget::initializeGL()
                     fragColor = texture(paintingTextures[5], fragTexCoord);
                 else if (index == 6)
                     fragColor = texture(paintingTextures[6], fragTexCoord);
-                else
+                else if (index == 7)
                     fragColor = texture(paintingTextures[7], fragTexCoord);
+                else if (index == 8)
+                    fragColor = texture(paintingTextures[8], fragTexCoord);
+                else if (index == 9)
+                    fragColor = texture(paintingTextures[9], fragTexCoord);
+                else if (index == 10)
+                    fragColor = texture(paintingTextures[10], fragTexCoord);
+                else
+                    fragColor = texture(paintingTextures[11], fragTexCoord);
             }
             else
             {
@@ -216,21 +226,37 @@ void MuseumWidget::paintGL()
 
     m_program.setUniformValue("mvp", mvp);
 
-    // Bind each painting texture to a texture unit.
-    for (int i = 0; i < static_cast<int>(m_paintingTextures.size()); i++) {
+    // Bind every texture in m_paintingTextures to its corresponding unit
+    for (int i = 0; i < static_cast<int>(m_paintingTextures.size()); ++i) {
         if (m_paintingTextures[i]) {
             m_paintingTextures[i]->bind(i);
         }
     }
 
-    // Bind sculpture texture to slot 7.
-    if (m_sculptureTexture) {
-        m_sculptureTexture->bind(7);
+    // Build an int array of texture unit indices and pass to shader
+    std::vector<int> textureUnits(m_paintingTextures.size());
+    for (int i = 0; i < static_cast<int>(textureUnits.size()); ++i) {
+        textureUnits[i] = i;
     }
 
+    // setUniformValueArray expects a raw pointer and count
+    m_program.setUniformValueArray("paintingTextures", textureUnits.data(), static_cast<int>(textureUnits.size()));
+
+    // Bind each painting texture to a texture unit.
+    //for (int i = 0; i < static_cast<int>(m_paintingTextures.size()); i++) {
+    //    if (m_paintingTextures[i]) {
+    //        m_paintingTextures[i]->bind(i);
+    //    }
+    //}
+
+    // Bind sculpture texture to slot 7.
+    //if (m_sculptureTexture) {
+    //    m_sculptureTexture->bind(7);
+    //}
+
     // Tell the shader which texture units to use.
-    int textureUnits[8] = {0, 1, 2, 3, 4, 5, 6, 7};
-    m_program.setUniformValueArray("paintingTextures", textureUnits, 8);
+    //int textureUnits[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+    //m_program.setUniformValueArray("paintingTextures", textureUnits, 8);
 
     m_vao.bind();
 
@@ -261,14 +287,25 @@ void MuseumWidget::setupRoomGeometry()
     // Add all painting frames and artwork rectangles.
     PaintingBuilder::addPaintings(vertices, m_clickableArtworks);
 
+    // wooden stool under the sculpture
+    GeometryBuilder::addStool(
+        vertices,
+        QVector3D(12.0f, 0.2f, -19.0f), // center: x, topY, z
+        2.0f,   // width (X)
+        2.0f,   // depth (Z)
+        2.0f,   // height (Y)
+        QVector3D(0.45f, 0.30f, 0.18f), // wood color
+        0.0f //0.02f   // small offset to reduce Z-fighting
+        );
+
     // add sculptures!!!
     SculptureBuilder::addSculpture(
         vertices,
         ":/sculptures/oAM.obj",
         ":/sculptures/oAM.mtl",
-        QVector3D(12.0f, 2.0f, -19.0f), // (x, y, z) -> y to move vertically
+        QVector3D(12.0f, 1.5f, -19.0f), // (x, y, z) -> y to move vertically
         5.0f,
-        7.0f  // slot 7, which is the next available texture slot
+        10.0f  // slot 10, next available texture slot after floor-7, wall-8, ceiling-9
         );
 
     // Send geometry to OpenGL.
@@ -497,6 +534,51 @@ void MuseumWidget::loadPaintingTextures()
 
         m_paintingTextures.push_back(texture);
     }
+
+    // load room textures in this order:
+    // index 7 = walls, index 8 = floor, index 9 = CeilingTexture
+    std::vector<QString> roomPaths = {
+        ":/textures/WallTexture.png",
+        ":/textures/FloorTexture.jpg",
+        ":/textures/CeilingTexture.jpg"
+    };
+
+    for (const QString &path : roomPaths) {
+        QImage img(path);
+        if (img.isNull()) {
+            qDebug() << "Failed to load room texture:" << path;
+            m_paintingTextures.push_back(nullptr);
+            continue;
+        }
+
+        qDebug() << "Room texture loaded successfully:" << path << img.width() << "x" << img.height();
+
+        img = img.convertToFormat(QImage::Format_RGBA8888).flipped(Qt::Vertical);
+
+        QOpenGLTexture *tex = new QOpenGLTexture(QOpenGLTexture::Target2D);
+        tex->create();
+        tex->bind();
+        tex->setData(img);
+        tex->setMinificationFilter(QOpenGLTexture::Linear);
+        tex->setMagnificationFilter(QOpenGLTexture::Linear);
+        tex->setWrapMode(QOpenGLTexture::ClampToEdge);
+        tex->release();
+
+        m_paintingTextures.push_back(tex);
+    }
+
+    // use existing loader for sculpture texture then append its pointer so it becomes index 10
+    loadSculptureTexture(); // this sets m_sculptureTexture
+    if (m_sculptureTexture) {
+        // Ensure  sculpture texture is flipped/format-correct if loadSculptureTexture didn't already do it
+        // If loadSculptureTexture already set m_sculptureTexture correctly, this is just appending the pointer.
+        m_paintingTextures.push_back(m_sculptureTexture);
+    } else {
+        m_paintingTextures.push_back(nullptr);
+    }
+
+    // print how many textures we have
+    qDebug() << "Total textures in m_paintingTextures:" << m_paintingTextures.size();
 }
 
 void MuseumWidget::loadSculptureTexture()
