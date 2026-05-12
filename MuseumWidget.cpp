@@ -135,7 +135,7 @@ void MuseumWidget::initializeGL()
         in float fragTextureIndex;
 
         // increased size to cover paintings & room textures & sculpture
-        uniform sampler2D paintingTextures[12];
+        uniform sampler2D paintingTextures[13];
         //uniform sampler2D sculptureTexture;
 
         out vec4 fragColor;
@@ -168,8 +168,10 @@ void MuseumWidget::initializeGL()
                     fragColor = texture(paintingTextures[9], fragTexCoord);
                 else if (index == 10)
                     fragColor = texture(paintingTextures[10], fragTexCoord);
-                else
+                else if (index == 11)
                     fragColor = texture(paintingTextures[11], fragTexCoord);
+                else if (index == 12)
+                    fragColor = texture(paintingTextures[12], fragTexCoord);
             }
             else
             {
@@ -185,7 +187,7 @@ void MuseumWidget::initializeGL()
     //loading image textures below
     loadPaintingTextures();
     // load sculptures!!
-    loadSculptureTexture();
+    //loadSculptureTexture();
     setupRoomGeometry();
 }
 
@@ -315,7 +317,7 @@ void MuseumWidget::setupRoomGeometry()
         ":/sculptures/oAM.mtl",
         QVector3D(12.0f, 1.5f, -19.0f), // (x, y, z) -> y to move vertically
         5.0f,
-        10.0f  // slot 10, next available texture slot after floor-7, wall-8, ceiling-9
+        12.0f  // slot 10, next available texture slot after floor-7, wall-8, ceiling-9
         );
 
     // Send geometry to OpenGL.
@@ -534,7 +536,9 @@ void MuseumWidget::loadPaintingTextures()
                                           ":/artwork/StarryNight.jpg",
                                           ":/artwork/FridaKahlo.jpg",
                                           ":/artwork/MonaLisa.jpg",
-                                          ":/artwork/Monet.jpg"};
+                                          ":/artwork/Monet.jpg",
+                                          ":/artwork/GreatWave.jpg",
+                                          ":/artwork/Crown.jpg"};
 
     for (const QString &path : paintingPaths) {
         QImage paintingImage(path);

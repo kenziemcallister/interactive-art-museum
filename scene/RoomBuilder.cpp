@@ -47,14 +47,14 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
 
     //this room starts at the right wall of Room 2 and extends farther right
     const float room3Left = right;
-    const float room3Right = 18.0f;
+    const float room3Right = 19.0f;
 
     const float room3FrontZ = -16.0f;
     const float room3BackZ = -22.0f;
 
     //doorway dimensions on the wall between Room 1 and Room 2
-    const float doorLeft = -1.5f;
-    const float doorRight = 1.5f;
+    const float doorLeft = -1.0f;
+    const float doorRight = 1.0f;
     const float doorTop = 3.0f;
 
     // Doorway dimensions on the right wall of Room 2 into Room 3.
@@ -84,7 +84,7 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
             QVector3D(right, floorY, zFront),
             QVector3D(right, floorY, zBack),
             QVector3D(left,  floorY, zBack),
-            8.0f
+            10.0f
             );
 
         // Ceiling
@@ -94,9 +94,9 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
             QVector3D(left,  ceilingY, zBack),
             QVector3D(right, ceilingY, zBack),
             QVector3D(right, ceilingY, zFront),
-            9.0f,
-            1.5f,
-            1.5f
+            11.0f,
+            1.0f,
+            1.0f
             );
 
         // Left wall
@@ -106,7 +106,7 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
             QVector3D(left, floorY,   zBack),
             QVector3D(left, ceilingY, zBack),
             QVector3D(left, ceilingY, zFront),
-            7.0f,
+            9.0f,
             0.5f,
             0.5f
             );
@@ -118,7 +118,7 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
             QVector3D(right, floorY,   zFront),
             QVector3D(right, ceilingY, zFront),
             QVector3D(right, ceilingY, zBack),
-            7.0f,
+            9.0f,
             0.5f,
             0.5f
             );
@@ -134,7 +134,7 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
             QVector3D(right, floorY,   z),
             QVector3D(right, ceilingY, z),
             QVector3D(left,  ceilingY, z),
-            7.0f,
+            9.0f,
             0.5f,
             0.5f
             );
@@ -151,7 +151,7 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
             QVector3D(doorLeft, floorY,   z),
             QVector3D(doorLeft, ceilingY, z),
             QVector3D(left,     ceilingY, z),
-            7.0f,
+            9.0f,
             0.5f,
             0.5f
             );
@@ -163,7 +163,7 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
             QVector3D(right,     floorY,   z),
             QVector3D(right,     ceilingY, z),
             QVector3D(doorRight, ceilingY, z),
-            7.0f,
+            9.0f,
             0.5f,
             0.5f
             );
@@ -175,7 +175,7 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
             QVector3D(doorRight, doorTop,  z),
             QVector3D(doorRight, ceilingY, z),
             QVector3D(doorLeft,  ceilingY, z),
-            7.0f,
+            9.0f,
             0.5f,
             0.5f
             );
@@ -199,7 +199,7 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
             QVector3D(x, floorY,   doorFrontZ),
             QVector3D(x, ceilingY, doorFrontZ),
             QVector3D(x, ceilingY, zFront),
-            7.0f,
+            9.0f,
             0.5f,
             0.5f
             );
@@ -211,7 +211,7 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
             QVector3D(x, floorY,   zBack),
             QVector3D(x, ceilingY, zBack),
             QVector3D(x, ceilingY, doorBackZ),
-            7.0f,
+            9.0f,
             0.5f,
             0.5f
             );
@@ -223,7 +223,7 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
             QVector3D(x, doorTop,  doorBackZ),
             QVector3D(x, ceilingY, doorBackZ),
             QVector3D(x, ceilingY, doorFrontZ),
-            7.0f,
+            9.0f,
             0.5f,
             0.5f
             );
@@ -246,7 +246,7 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
         QVector3D(right, floorY, middleZ),
         QVector3D(right, floorY, backZ),
         QVector3D(left,  floorY, backZ),
-        8.0f
+        10.0f
         );
 
     // Room 2 ceiling
@@ -256,9 +256,9 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
         QVector3D(left,  ceilingY, backZ),
         QVector3D(right, ceilingY, backZ),
         QVector3D(right, ceilingY, middleZ),
-        9.0f,
-        1.5f,
-        1.5f
+        11.0f,
+        1.0f,
+        1.0f
         );
 
     // Room 2 left wall
@@ -268,7 +268,7 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
         QVector3D(left, floorY,   backZ),
         QVector3D(left, ceilingY, backZ),
         QVector3D(left, ceilingY, middleZ),
-        7.0f,
+        9.0f,
         0.5f,
         0.5f
         );
@@ -291,7 +291,7 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
         QVector3D(room3Right, floorY, room3FrontZ),
         QVector3D(room3Right, floorY, room3BackZ),
         QVector3D(room3Left,  floorY, room3BackZ),
-        8.0f,
+        10.0f,
         1.0,
         0.5
         );
@@ -303,9 +303,9 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
         QVector3D(room3Left,  ceilingY, room3BackZ),
         QVector3D(room3Right, ceilingY, room3BackZ),
         QVector3D(room3Right, ceilingY, room3FrontZ),
-        9.0f,
-        1.5,
-        1.5
+        11.0f,
+        1.0,
+        1.0
         );
 
     // Room 3 far right wall
@@ -315,7 +315,7 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
         QVector3D(room3Right, floorY,   room3FrontZ),
         QVector3D(room3Right, ceilingY, room3FrontZ),
         QVector3D(room3Right, ceilingY, room3BackZ),
-        7.0f,
+        9.0f,
         0.5f,
         0.5f
         );
@@ -327,7 +327,7 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
         QVector3D(room3Right, floorY,   room3FrontZ),
         QVector3D(room3Right, ceilingY, room3FrontZ),
         QVector3D(room3Left,  ceilingY, room3FrontZ),
-        7.0f,
+        9.0f,
         0.5f,
         0.5f
         );
@@ -339,7 +339,7 @@ void RoomBuilder::addMuseumRooms(std::vector<Vertex>& vertices)
         QVector3D(room3Left,  floorY,   room3BackZ),
         QVector3D(room3Left,  ceilingY, room3BackZ),
         QVector3D(room3Right, ceilingY, room3BackZ),
-        7.0f,
+        9.0f,
         0.5f,
         0.5f
         );

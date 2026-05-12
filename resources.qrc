@@ -7,6 +7,8 @@
         <file alias="FridaKahlo.jpg">assets/artwork/FridaKahlo.jpg</file>
         <file alias="MonaLisa.jpg">assets/artwork/MonaLisa.jpg</file>
         <file alias="Monet.jpg">assets/artwork/Monet.jpg</file>
+        <file alias="GreatWave.jpg">assets/artwork/GreatWave.jpg</file>
+        <file alias="Crown.jpg">assets/artwork/Crown.jpg</file>
     </qresource>
     <qresource prefix="/textures">
         <file alias="WallTexture.png">assets/textures/WallTexture.png</file>

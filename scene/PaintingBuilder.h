@@ -45,6 +45,20 @@ private:
         const QString& description
         );
 
+    static void addPaintingOnFrontWall(
+        std::vector<Vertex>& vertices,
+        std::vector<ClickableArtwork>& clickableArtworks,
+        float centerX,
+        float centerY,
+        float z,
+        float width,
+        float height,
+        float textureIndex,
+        const QString& title,
+        const QString& artist,
+        const QString& description
+        );
+
     static void addBackWallFeaturePainting(
         std::vector<Vertex>& vertices,
         std::vector<ClickableArtwork>& clickableArtworks,

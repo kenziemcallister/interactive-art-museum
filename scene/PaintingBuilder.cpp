@@ -21,6 +21,7 @@ void PaintingBuilder::addPaintings(
     const float left = -6.0f;
     const float right = 6.0f;
     const float backZ = -22.0f;
+    const float frontZ = 2.0f;
 
     // -------------------------
     // Add paintings
@@ -88,6 +89,21 @@ void PaintingBuilder::addPaintings(
         "Frida Kahlo’s portraits often combine personal identity, symbolism, and emotional honesty. Her work uses direct gaze, vivid color, and meaningful details to explore themes of pain, resilience, culture, and self-expression."
         );
 
+    // Front wall painting behind the user at the start
+    addPaintingOnFrontWall(
+        vertices,
+        clickableArtworks,
+        0.0f,      // center x
+        2.2f,      // center y
+        frontZ,    // wall z position
+        4.0f,      // painting width
+        2.6f,      // painting height
+        6.0f,      // texture index for Monet
+        "Monet Painting",
+        "Claude Monet",
+        "Claude Monet’s impressionist paintings focus on light, color, and atmosphere rather than sharp detail. With loose brushwork and shifting tones, Monet captures a fleeting moment in nature and encourages viewers to experience the scene through sensation and mood."
+        );
+
     // Room 2 left wall paintings (portrait)
     addPaintingOnLeftWall(
         vertices,
@@ -103,6 +119,21 @@ void PaintingBuilder::addPaintings(
         "Leonardo da Vinci’s Mona Lisa is celebrated for its subtle expression, delicate modeling, and mysterious atmosphere. The sitter’s calm presence and faint smile have made the portrait one of the most studied and recognizable works in art history."
         );
 
+    // crown painting next to mona lisa
+    addPaintingOnLeftWall(
+        vertices,
+        clickableArtworks,
+        -18.0f, // moved farther down the wall so it is not on top of Mona Lisa
+        2.5f,
+        left,
+        1.3f,
+        2.0f,
+        8.0f, // texture index for Basquiat, if Basquiat is index 8
+        "Crowned Figure",
+        "Jean-Michel Basquiat",
+        "Jean-Michel Basquiat often used crowns as symbols of power, recognition, and cultural identity. This crowned figure reflects his expressive style, combining bold linework, layered imagery, and social commentary."
+        );
+
     // Room 2 right wall paintings
     addPaintingOnRightWall(
         vertices,
@@ -112,10 +143,10 @@ void PaintingBuilder::addPaintings(
         right,
         2.0f,
         1.3f,
-        6.0f, // texture index
-        "Monet Painting",
-        "Claude Monet",
-        "Claude Monet’s impressionist paintings focus on light, color, and atmosphere rather than sharp detail. With loose brushwork and shifting tones, Monet captures a fleeting moment in nature and encourages viewers to experience the scene through sensation and mood."
+        7.0f, // texture index
+        "The Great Wave Print",
+        "Katsushika Hokusai",
+        "The Great Wave is celebrated for its dynamic composition, blending traditional Japansese artistic techniques with Western perspective, and for its depiction of the overwhelming power of nature contrasted with human vulnerability."
         );
 
     addBackWallFeaturePainting(vertices, clickableArtworks, backZ);
@@ -222,6 +253,75 @@ void PaintingBuilder::addPaintingOnRightWall(
     QVector3D artworkB(x - offset * 2.0f, centerY - halfH, centerZ + halfW);
     QVector3D artworkC(x - offset * 2.0f, centerY + halfH, centerZ + halfW);
     QVector3D artworkD(x - offset * 2.0f, centerY + halfH, centerZ - halfW);
+
+    // Artwork rectangle
+    GeometryBuilder::addTexturedRectangle(
+        vertices,
+        artworkA,
+        artworkB,
+        artworkC,
+        artworkD,
+        textureIndex
+        );
+
+    // Save the same rectangle corners so raycasting can detect clicks on this painting.
+    clickableArtworks.push_back({
+        title,
+        artist,
+        description,
+        artworkA,
+        artworkB,
+        artworkC,
+        artworkD
+    });
+}
+
+void PaintingBuilder::addPaintingOnFrontWall(
+    std::vector<Vertex>& vertices,
+    std::vector<ClickableArtwork>& clickableArtworks,
+    float centerX,
+    float centerY,
+    float z,
+    float width,
+    float height,
+    float textureIndex,
+    const QString& title,
+    const QString& artist,
+    const QString& description
+    )
+{
+    // Adds a framed painting on the front wall where z stays constant.
+    // This is the wall behind the user when the museum first loads.
+    // The painting stretches along x and y.
+
+    QVector3D frameColor(0.05f, 0.03f, 0.02f);
+
+    float halfW = width / 2.0f;
+    float halfH = height / 2.0f;
+
+    float offset = 0.04f;
+    float framePadding = 0.15f;
+
+    // Since this is the front wall at z = frontZ,
+    // the inside of the room is toward smaller z values.
+    // So we subtract the offset to move the painting slightly into the room.
+    float paintingZ = z - offset * 2.0f;
+    float frameZ = z - offset;
+
+    // Frame rectangle
+    GeometryBuilder::addColoredRectangle(
+        vertices,
+        QVector3D(centerX + halfW + framePadding, centerY - halfH - framePadding, frameZ),
+        QVector3D(centerX - halfW - framePadding, centerY - halfH - framePadding, frameZ),
+        QVector3D(centerX - halfW - framePadding, centerY + halfH + framePadding, frameZ),
+        QVector3D(centerX + halfW + framePadding, centerY + halfH + framePadding, frameZ),
+        frameColor
+        );
+
+    QVector3D artworkA(centerX + halfW, centerY - halfH, paintingZ);
+    QVector3D artworkB(centerX - halfW, centerY - halfH, paintingZ);
+    QVector3D artworkC(centerX - halfW, centerY + halfH, paintingZ);
+    QVector3D artworkD(centerX + halfW, centerY + halfH, paintingZ);
 
     // Artwork rectangle
     GeometryBuilder::addTexturedRectangle(
