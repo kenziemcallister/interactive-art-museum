@@ -8,6 +8,10 @@
 
 #include <QVector2D>
 
+QVector3D GeometryBuilder::computeFaceNormal(const QVector3D &a, const QVector3D &b, const QVector3D &c) {
+    return QVector3D::crossProduct(b - a, c - a).normalized();
+}
+
 //creating rectangles in the scene
 void GeometryBuilder::addColoredRectangle(
     std::vector<Vertex>& vertices,
@@ -22,15 +26,18 @@ void GeometryBuilder::addColoredRectangle(
     float useTexture = 0.0f;
     float textureIndex = 0.0f;
 
+    // compute face normal once and reuse for all vertices (flat shading)
+    QVector3D normal = computeFaceNormal(a, b, c);
+
     // Triangle 1
-    vertices.push_back({ a, color, noTexCoord, useTexture, textureIndex });
-    vertices.push_back({ b, color, noTexCoord, useTexture, textureIndex });
-    vertices.push_back({ c, color, noTexCoord, useTexture, textureIndex });
+    vertices.push_back({ a, color, noTexCoord, useTexture, textureIndex, normal });
+    vertices.push_back({ b, color, noTexCoord, useTexture, textureIndex, normal });
+    vertices.push_back({ c, color, noTexCoord, useTexture, textureIndex, normal });
 
     // Triangle 2
-    vertices.push_back({ a, color, noTexCoord, useTexture, textureIndex });
-    vertices.push_back({ c, color, noTexCoord, useTexture, textureIndex });
-    vertices.push_back({ d, color, noTexCoord, useTexture, textureIndex });
+    vertices.push_back({ a, color, noTexCoord, useTexture, textureIndex, normal });
+    vertices.push_back({ c, color, noTexCoord, useTexture, textureIndex, normal });
+    vertices.push_back({ d, color, noTexCoord, useTexture, textureIndex, normal });
 }
 
 //creating textured rectangles (adding images, textures, etc)
@@ -51,15 +58,18 @@ void GeometryBuilder::addTexturedRectangle(
     QVector2D texC(1.0f, 1.0f);
     QVector2D texD(0.0f, 1.0f);
 
+    // compute face normal once
+    QVector3D normal = computeFaceNormal(a, b, c);
+
     // Triangle 1
-    vertices.push_back({ a, whiteColor, texA, useTexture, textureIndex });
-    vertices.push_back({ b, whiteColor, texB, useTexture, textureIndex });
-    vertices.push_back({ c, whiteColor, texC, useTexture, textureIndex });
+    vertices.push_back({ a, whiteColor, texA, useTexture, textureIndex, normal });
+    vertices.push_back({ b, whiteColor, texB, useTexture, textureIndex, normal });
+    vertices.push_back({ c, whiteColor, texC, useTexture, textureIndex, normal });
 
     // Triangle 2
-    vertices.push_back({ a, whiteColor, texA, useTexture, textureIndex });
-    vertices.push_back({ c, whiteColor, texC, useTexture, textureIndex });
-    vertices.push_back({ d, whiteColor, texD, useTexture, textureIndex });
+    vertices.push_back({ a, whiteColor, texA, useTexture, textureIndex, normal });
+    vertices.push_back({ c, whiteColor, texC, useTexture, textureIndex, normal });
+    vertices.push_back({ d, whiteColor, texD, useTexture, textureIndex, normal });
 }
 
 //helper for the wall texture to not repeat so much
@@ -84,15 +94,18 @@ void GeometryBuilder::addTexturedRectangleTiled(
     QVector2D texC(tileX, tileY);
     QVector2D texD(0.0f, tileY);
 
+    // compute face normal once
+    QVector3D normal = computeFaceNormal(a, b, c);
+
     // Triangle 1
-    vertices.push_back({ a, whiteColor, texA, useTexture, textureIndex });
-    vertices.push_back({ b, whiteColor, texB, useTexture, textureIndex });
-    vertices.push_back({ c, whiteColor, texC, useTexture, textureIndex });
+    vertices.push_back({ a, whiteColor, texA, useTexture, textureIndex, normal });
+    vertices.push_back({ b, whiteColor, texB, useTexture, textureIndex, normal });
+    vertices.push_back({ c, whiteColor, texC, useTexture, textureIndex, normal });
 
     // Triangle 2
-    vertices.push_back({ a, whiteColor, texA, useTexture, textureIndex });
-    vertices.push_back({ c, whiteColor, texC, useTexture, textureIndex });
-    vertices.push_back({ d, whiteColor, texD, useTexture, textureIndex });
+    vertices.push_back({ a, whiteColor, texA, useTexture, textureIndex, normal });
+    vertices.push_back({ c, whiteColor, texC, useTexture, textureIndex, normal });
+    vertices.push_back({ d, whiteColor, texD, useTexture, textureIndex, normal });
 }
 
 void GeometryBuilder::addStool(

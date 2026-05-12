@@ -30,6 +30,9 @@ struct Vertex
     // 1 = second painting
     // 2 = third painting
     float textureIndex;
+
+    // normal field - creates normals at geometry creation
+    QVector3D normal;
 };
 
 #endif

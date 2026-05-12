@@ -49,6 +49,9 @@ public:
         const QVector3D& color,
         float offset = 0.02f
         );
+
+    // computes normal & uses it when pushing each vertex made in addColoredRectangle & addTexturedRectangle
+    static QVector3D computeFaceNormal(const QVector3D &a, const QVector3D &b, const QVector3D &c);
 };
 
 #endif

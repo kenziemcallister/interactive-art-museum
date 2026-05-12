@@ -75,6 +75,16 @@ void SculptureBuilder::addSculpture(std::vector<Vertex>& vertices,
                     vertex.textureIndex = 0.0f;
                 }
 
+                // read normals from file!
+                if (idx.normal_index >= 0) {
+                    tinyobj::real_t nx = attrib.normals[3 * size_t(idx.normal_index) + 0];
+                    tinyobj::real_t ny = attrib.normals[3 * size_t(idx.normal_index) + 1];
+                    tinyobj::real_t nz = attrib.normals[3 * size_t(idx.normal_index) + 2];
+                    vertex.normal = QVector3D(nx, ny, nz).normalized();
+                } else {
+                    vertex.normal = QVector3D(0.0f, 1.0f, 0.0f); // fallback
+                }
+
                 vertex.color = QVector3D(0.8f, 0.8f, 0.8f);
                 vertices.push_back(vertex);
             }

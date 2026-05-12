@@ -105,13 +105,21 @@ void MuseumWidget::initializeGL()
         layout(location = 2) in vec2 texCoord;
         layout(location = 3) in float useTexture;
         layout(location = 4) in float textureIndex;
+        //lighting
+        layout(location = 5) in vec3 normal;
 
         uniform mat4 mvp;
+        //lighting
+        uniform mat4 model;
+        uniform mat3 normalMatrix;
 
         out vec3 vertexColor;
         out vec2 fragTexCoord;
         out float fragUseTexture;
         out float fragTextureIndex;
+        //lighting
+        out vec3 FragPos;
+        out vec3 Normal;
 
         void main()
         {
@@ -119,6 +127,11 @@ void MuseumWidget::initializeGL()
             fragTexCoord = texCoord;
             fragUseTexture = useTexture;
             fragTextureIndex = textureIndex;
+
+            // world-space fragment position
+            FragPos = vec3(model * vec4(position, 1.0));
+            // transform normal by normalMatrix (model's inverse-transpose)
+            Normal = normalize(normalMatrix * normal);
 
             gl_Position = mvp * vec4(position, 1.0);
         }
@@ -133,56 +146,81 @@ void MuseumWidget::initializeGL()
         in vec2 fragTexCoord;
         in float fragUseTexture;
         in float fragTextureIndex;
+        //lighting
+        in vec3 FragPos;
+        in vec3 Normal;
 
         // increased size to cover paintings & room textures & sculpture
         uniform sampler2D paintingTextures[13];
         //uniform sampler2D sculptureTexture;
 
+        //lighting uniforms
+        uniform vec3 lightPos;
+        uniform vec3 lightPos2;
+        uniform vec3 lightColor;
+        uniform vec3 viewPos;
+
         out vec4 fragColor;
 
         void main()
         {
+            // --- lighting parameters ---
+            float ambientStrength = 0.3;
+            float specularStrength = 0.2;
+            float shininess = 20.0;
+
+            // Ambient
+            vec3 ambient = ambientStrength * lightColor;
+
+            // Diffuse (Lambert)
+            vec3 norm = normalize(Normal);
+            vec3 lightDir = normalize(lightPos - FragPos);
+            //float diff = max(dot(norm, lightDir), 0.0);
+            float diff = max(abs(dot(norm, lightDir)), 0.0);
+            vec3 diffuse = diff * lightColor * 0.5;
+
+            // Specular (Blinn-Phong)
+            vec3 viewDir = normalize(viewPos - FragPos);
+            vec3 halfway = normalize(lightDir + viewDir);
+            float spec = pow(max(dot(norm, halfway), 0.0), shininess);
+            vec3 specular = specularStrength * spec * lightColor;
+
+            // Second light for room 3
+            vec3 lightDir2 = normalize(lightPos2 - FragPos);
+            float diff2 = max(abs(dot(norm, lightDir2)), 0.0);
+            vec3 diffuse2 = diff2 * lightColor * 0.5;
+            vec3 lighting = ambient + diffuse + specular + diffuse2;
+
+            // --- Base color from texture or vertex color ---
+            vec4 baseColor;
+
             if (fragUseTexture > 0.5)
             {
                 int index = int(fragTextureIndex);
-
-                if (index == 0)
-                    fragColor = texture(paintingTextures[0], fragTexCoord);
-                else if (index == 1)
-                    fragColor = texture(paintingTextures[1], fragTexCoord);
-                else if (index == 2)
-                    fragColor = texture(paintingTextures[2], fragTexCoord);
-                else if (index == 3)
-                    fragColor = texture(paintingTextures[3], fragTexCoord);
-                else if (index == 4)
-                    fragColor = texture(paintingTextures[4], fragTexCoord);
-                else if (index == 5)
-                    fragColor = texture(paintingTextures[5], fragTexCoord);
-                else if (index == 6)
-                    fragColor = texture(paintingTextures[6], fragTexCoord);
-                else if (index == 7)
-                    fragColor = texture(paintingTextures[7], fragTexCoord);
-                else if (index == 8)
-                    fragColor = texture(paintingTextures[8], fragTexCoord);
-                else if (index == 9)
-                    fragColor = texture(paintingTextures[9], fragTexCoord);
-                else if (index == 10)
-                    fragColor = texture(paintingTextures[10], fragTexCoord);
-                else if (index == 11)
-                    fragColor = texture(paintingTextures[11], fragTexCoord);
-                else if (index == 12)
-                    fragColor = texture(paintingTextures[12], fragTexCoord);
+                // clamp index to valid range definitively
+                index = clamp(index, 0, 12);
+                baseColor = texture(paintingTextures[index], fragTexCoord);
             }
             else
             {
-                fragColor = vec4(vertexColor, 1.0);
+                baseColor = vec4(vertexColor, 1.0);
             }
+
+            // apply lighting to RBG & preserve alpha
+            vec3 lit = lighting * baseColor.rgb;
+            fragColor = vec4(lit, baseColor.a);
         }
     )";
 
     m_program.addShaderFromSourceCode(QOpenGLShader::Vertex, vertexShaderSource);
     m_program.addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShaderSource);
     m_program.link();
+
+    if (!m_program.link()) {
+        qDebug() << "Shader program link failed:" << m_program.log();
+    } else {
+        qDebug() << "Shader program linked successfully.";
+    }
 
     //loading image textures below
     loadPaintingTextures();
@@ -236,6 +274,25 @@ void MuseumWidget::paintGL()
     m_program.bind();
 
     m_program.setUniformValue("mvp", mvp);
+
+    // Model matrix (identity here; change if you transform objects)
+    //QMatrix4x4 model;
+    //model.setToIdentity();
+    m_program.setUniformValue("model", model);
+
+    // Normal matrix (3x3) — use model.normalMatrix()
+    QMatrix3x3 normalMat = model.normalMatrix();
+    m_program.setUniformValue("normalMatrix", normalMat);
+
+    // Light and view uniforms
+    // Place the light somewhere above the room; tweak as needed
+    m_program.setUniformValue("lightPos", QVector3D(0.0f, 3.5f, -10.0f));
+    m_program.setUniformValue("lightColor", QVector3D(1.0f, 1.0f, 1.0f));
+    m_program.setUniformValue("viewPos", m_cameraPosition);
+
+    // sculpture light
+    m_program.setUniformValue("lightPos2", QVector3D(12.0f, 3.5f, -19.0f));
+
 
     // Bind every texture in m_paintingTextures to its corresponding unit
     for (int i = 0; i < static_cast<int>(m_paintingTextures.size()); ++i) {
@@ -383,6 +440,15 @@ void MuseumWidget::uploadGeometryToGPU(const std::vector<Vertex> &vertices)
                           GL_FALSE,
                           sizeof(Vertex),
                           reinterpret_cast<void *>(offsetof(Vertex, textureIndex)));
+
+    // attribute 5 = normal for lighting!!
+    glEnableVertexAttribArray(5);
+    glVertexAttribPointer(5,
+                          3,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(Vertex),
+                          reinterpret_cast<void *>(offsetof(Vertex, normal)));
 
     m_vbo.release();
     m_vao.release();
@@ -571,6 +637,7 @@ void MuseumWidget::loadPaintingTextures()
         texture->release();
 
         m_paintingTextures.push_back(texture);
+        //m_sculptureTexture = nullptr; // avoid double-delete in destructor
     }
 
     // load room textures in this order:
@@ -611,6 +678,7 @@ void MuseumWidget::loadPaintingTextures()
         // Ensure  sculpture texture is flipped/format-correct if loadSculptureTexture didn't already do it
         // If loadSculptureTexture already set m_sculptureTexture correctly, this is just appending the pointer.
         m_paintingTextures.push_back(m_sculptureTexture);
+        m_sculptureTexture = nullptr;
     } else {
         m_paintingTextures.push_back(nullptr);
     }
